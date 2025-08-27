@@ -6,32 +6,51 @@
 - **Context**: Creating a routing mechanism to determine which backend system should handle specific requests based on various criteria
 
 ## Problem Statement
-Need to create a service that can:
-- Detect whether a request should be routed to Drive or Legacy system
-- Provide clear routing decisions based on configurable rules
-- Support gradual migration from Legacy to Drive system
-- Enable A/B testing and phased rollouts
+
+The existing LegacySystemDetector has an incomplete implementation at line 22 where it attempts to determine if a registration is Drive-compatible but doesn't return the result. Need to create a proper routing detector that:
+
+- Determines if a registration should be handled by Drive or Legacy system based on isDriveCompatible flag
+- Handles both regular GUIDs (Drive) and encoded long IDs (Legacy)
+- Implements proper caching to reduce API calls
+- Provides clear routing decisions with proper error handling
 
 ## Solution Approach
-- Create an interface `ILegacySystemDetector` for routing detection
-- Implement `LegacySystemDetector` with configurable routing rules
-- Support multiple detection strategies (feature flags, user segments, request attributes)
-- Provide clear logging and metrics for routing decisions
+
+- Create new `IRequestRoutingDetector` interface to replace incomplete implementation
+- Implement proper GUID/Long ID conversion logic for legacy registrations
+- Use two-level caching strategy:
+  - HTTP response cache (5-10s TTL) for API responses
+  - Routing decision cache (20min TTL) for isDriveCompatible results
+- Support distributed cache backends (Redis, Azure Storage)
 
 ## Implementation Details
+
+### Technical Context
 - **Language**: C#/.NET
 - **New Service Name**: RequestRoutingDetector
-- **Location**: AF.CustomerVehicleRegistrations.BFF/Services/Routing/
-- **Pattern**: Repository pattern with caching decorator
-- **Cache Library**: Microsoft.Extensions.Caching with abstraction for providers
-- **Integration**: Injected via DI, replacing existing LegacySystemDetector
+- **Location**: AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/
+- **Pattern**: Service with injected cache abstractions
+- **Cache Strategy**: Two-level caching with different TTLs
+- **Integration**: Gradual replacement of LegacySystemDetector via feature flags
 
-## Files to Create/Modify
-- AF.CustomerVehicleRegistrations.BFF/Services/Routing/IRequestRoutingDetector.cs (new)
-- AF.CustomerVehicleRegistrations.BFF/Services/Routing/RequestRoutingDetector.cs (new)
-- AF.CustomerVehicleRegistrations.BFF/Services/Routing/Cache/IRegistrationCache.cs (new)
-- AF.CustomerVehicleRegistrations.BFF/Services/Routing/Cache/InMemoryRegistrationCache.cs (new)
-- AF.CustomerVehicleRegistrations.BFF/Services/Routing/Cache/DistributedRegistrationCache.cs (new)
+### Key Technical Details
+- Registration IDs can be either regular GUIDs (Drive) or encoded longs (Legacy)
+- Legacy IDs are detected by checking if GUID ends with "-0000-0000-0000-000000000000"
+- Must check both RegistrationId match AND decoded legacy ID match
+- Drive is source of truth for all registration data
+- `isDriveCompatible` flag determines routing in most cases
+
+## Files Created/To Create
+
+### Created (2025-08-27)
+- ✅ AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/IRequestRoutingDetector.cs
+- ✅ AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/IRegistrationCache.cs
+- ✅ AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/IDistributedCacheProvider.cs
+
+### To Create
+- AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/RequestRoutingDetector.cs
+- AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/InMemoryRegistrationCache.cs
+- AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/DistributedRegistrationCache.cs
 - Update dependency injection in Program.cs
 - Add unit tests in corresponding test project
 
@@ -58,6 +77,47 @@ Need to create a service that can:
 - Legacy system interfaces
 
 ## Session Recovery
-- Project focuses on implementing ILegacySystemDetector interface
-- Initial routing will be based on configuration and feature flags
-- Tests will validate both Drive and Legacy routing paths
+
+Key information for resuming work:
+- Main issue: LegacySystemDetector has incomplete implementation on line 22
+- Registration IDs can be regular GUIDs or encoded longs
+- Need to check both RegistrationId and decoded legacy ID
+
+## Design Completed (2025-08-27)
+
+### Interfaces Created
+
+1. **IRequestRoutingDetector** (`/Services/RequestRouting/IRequestRoutingDetector.cs`)
+   - Main service interface for routing detection
+   - Methods:
+     - `IsRegistrationDriveCompatible()` - Determines Drive compatibility
+     - `GetVehicleRegistration()` - Gets registration checking both IDs
+     - `IsLegacyRegistrationFormat()` - Quick format check
+
+2. **IRegistrationCache** (`/Services/RequestRouting/IRegistrationCache.cs`)
+   - Cache abstraction for two-level caching
+   - HTTP response cache (10s TTL)
+   - Routing decision cache (20min TTL)
+   - Includes CacheConfiguration class
+
+3. **IDistributedCacheProvider** (`/Services/RequestRouting/IDistributedCacheProvider.cs`)
+   - Abstraction for distributed cache backends
+   - Support for Redis, Azure Storage, etc.
+   - Includes CacheKeyBuilder for consistent keys
+
+### Design Decisions
+
+1. **Separation of Concerns**
+   - New RequestRouting namespace separate from Legacy
+   - Clean interfaces with single responsibilities
+   - Abstracted cache providers for flexibility
+
+2. **Caching Strategy**
+   - Two-level caching with different TTLs
+   - Cache key patterns for easy invalidation
+   - Health checks for cache availability
+
+3. **API Design**
+   - Renamed method to `IsRegistrationDriveCompatible` for clarity
+   - Added separate method for format checking
+   - Consistent cancellation token support
