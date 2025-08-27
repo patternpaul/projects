@@ -67,10 +67,17 @@ Next steps: Create unit tests to validate core functionality before adding cachi
 ### Key Technical Details
 
 - Registration IDs can be either regular GUIDs (Drive) or encoded longs (Legacy)
+- Use existing `TryParseLong` extension method to detect legacy format IDs
 - Must check both RegistrationId match AND decoded legacy ID match
 - Two-level caching: HTTP responses (5-10s) and routing decisions (20min)
 - Drive is source of truth for all registration data
 - `isDriveCompatible` flag determines routing in most cases
+
+### User Feedback (2025-08-27 Session 2)
+
+- Use existing utility functions: `TryParseLong` extension method already handles legacy ID detection
+- Don't recreate logic that already exists in the codebase
+- The `TryParseLong` method properly checks format and does conversion
 
 ### Implementation Approach
 

@@ -35,7 +35,8 @@ The existing LegacySystemDetector has an incomplete implementation at line 22 wh
 
 ### Key Technical Details
 - Registration IDs can be either regular GUIDs (Drive) or encoded longs (Legacy)
-- Legacy IDs are detected by checking if GUID ends with "-0000-0000-0000-000000000000"
+- Legacy IDs are detected using the existing `TryParseLong` extension method
+- The `TryParseLong` method checks if GUID ends with "-0000-0000-0000-000000000000" and can convert to long
 - Must check both RegistrationId match AND decoded legacy ID match
 - Drive is source of truth for all registration data
 - `isDriveCompatible` flag determines routing in most cases
