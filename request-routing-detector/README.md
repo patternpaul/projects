@@ -20,15 +20,20 @@ Need to create a service that can:
 
 ## Implementation Details
 - **Language**: C#/.NET
-- **Pattern**: Strategy pattern for different detection methods
-- **Location**: AF.CustomerVehicleRegistrations.BFF/Services/Legacy/
-- **Integration**: Will be injected as a service in the BFF layer
+- **New Service Name**: RequestRoutingDetector
+- **Location**: AF.CustomerVehicleRegistrations.BFF/Services/Routing/
+- **Pattern**: Repository pattern with caching decorator
+- **Cache Library**: Microsoft.Extensions.Caching with abstraction for providers
+- **Integration**: Injected via DI, replacing existing LegacySystemDetector
 
-## Files Modified
-- AF.CustomerVehicleRegistrations.BFF/Services/Legacy/ILegacySystemDetector.cs (new)
-- AF.CustomerVehicleRegistrations.BFF/Services/Legacy/LegacySystemDetector.cs (new)
-- Will update dependency injection configuration
-- Will add unit tests for detector logic
+## Files to Create/Modify
+- AF.CustomerVehicleRegistrations.BFF/Services/Routing/IRequestRoutingDetector.cs (new)
+- AF.CustomerVehicleRegistrations.BFF/Services/Routing/RequestRoutingDetector.cs (new)
+- AF.CustomerVehicleRegistrations.BFF/Services/Routing/Cache/IRegistrationCache.cs (new)
+- AF.CustomerVehicleRegistrations.BFF/Services/Routing/Cache/InMemoryRegistrationCache.cs (new)
+- AF.CustomerVehicleRegistrations.BFF/Services/Routing/Cache/DistributedRegistrationCache.cs (new)
+- Update dependency injection in Program.cs
+- Add unit tests in corresponding test project
 
 ## Testing Strategy
 - Unit tests for each detection strategy

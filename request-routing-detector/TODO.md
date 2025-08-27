@@ -2,47 +2,85 @@
 
 ## Meta-Level Tasks
 
-- [ ] Set up project structure
-  - [x] Create project directory
-  - [x] Create documentation files
-  - [ ] Initialize .NET project
-  - [ ] Set up basic folder structure
+- [x] Analyze existing implementation
+  - [x] Review LegacySystemDetector code
+  - [x] Understand GUID/Long conversion logic
+  - [x] Study VehicleRegistrationDto structure
 
-- [ ] Implement detector interface
-  - [ ] Define ILegacySystemDetector interface
-  - [ ] Create method signatures for detection logic
-  - [ ] Add documentation comments
+- [ ] Design new RequestRoutingDetector (NEXT TASK)
+  - [ ] Create IRequestRoutingDetector interface
+  - [ ] Define cache abstractions (IRegistrationCache)
+  - [ ] Plan dependency injection setup
 
-- [ ] Implement detector service
-  - [ ] Create LegacySystemDetector class
-  - [ ] Implement basic routing logic
-  - [ ] Add configuration support
-  - [ ] Implement logging
+- [ ] Implement core routing logic
+  - [ ] Create RequestRoutingDetector class
+  - [ ] Implement registration lookup logic
+  - [ ] Handle GUID to long conversion for legacy IDs
+  - [ ] Add error handling and logging
+
+- [ ] Implement caching layer
+  - [ ] Create in-memory cache implementation
+  - [ ] Add HTTP client response caching (5-10s TTL)
+  - [ ] Add isDriveCompatible result caching (20min TTL)
+  - [ ] Create cache key generation logic
+
+- [ ] Add distributed cache support
+  - [ ] Create cache abstraction interface
+  - [ ] Implement Azure Storage cache provider
+  - [ ] Implement Redis cache provider (fallback)
+  - [ ] Add cache configuration
 
 - [ ] Create unit tests
-  - [ ] Test interface contracts
-  - [ ] Test routing logic
-  - [ ] Test configuration scenarios
-  - [ ] Test edge cases
+  - [ ] Test GUID/long conversion scenarios
+  - [ ] Test registration matching logic
+  - [ ] Test cache hit/miss scenarios
+  - [ ] Test error handling and fallback
 
-- [ ] Integration
-  - [ ] Register service in DI container
-  - [ ] Update controllers to use detector
-  - [ ] Add integration tests
+- [ ] Integration planning
+  - [ ] Document replacement strategy
+  - [ ] Create feature flag for gradual rollout
+  - [ ] Plan metrics and monitoring
 
 ## Current Focus
 
-Currently working on: Setting up initial project structure and documentation
+Currently working on: Analyzing requirements and designing architecture
 Blocking issues: None
-Next steps: Create .NET project structure and implement interface
+Next steps: Design and implement new RequestRoutingDetector interface
 
 ## Important Context
 
-- This detector will be crucial for gradual migration from Legacy to Drive system
-- Must support feature flags for controlled rollout
-- Performance is critical as this will be called on every request
-- Should be easily testable and mockable
+### Key Technical Details
+- Registration IDs can be either regular GUIDs (Drive) or encoded longs (Legacy)
+- Must check both RegistrationId match AND decoded legacy ID match
+- Two-level caching: HTTP responses (5-10s) and routing decisions (20min)
+- Drive is source of truth for all registration data
+- `isDriveCompatible` flag determines routing in most cases
+
+### Implementation Approach
+1. Create new service alongside existing LegacySystemDetector
+2. Use feature flags to control rollout
+3. Monitor performance metrics
+4. Gradually replace old implementation
 
 ## Session History
 
-- Session 1 (2025-08-27): Project initialization and documentation setup
+- Session 1 (2025-08-27): 
+  - Analyzed existing LegacySystemDetector implementation
+  - Documented technical requirements and caching strategy
+  - Updated project documentation with detailed specifications
+
+## NEXT TASK Selection Rationale
+
+**Selected: Design new RequestRoutingDetector**
+
+Reasoning:
+- Foundation task that unblocks all other implementation work
+- Defines the contract that other components will depend on
+- Allows us to establish clean architecture from the start
+- Critical for ensuring proper abstraction and testability
+
+This task involves:
+1. Creating the IRequestRoutingDetector interface
+2. Defining cache abstraction interfaces
+3. Planning the dependency injection setup
+4. Documenting the API contract
