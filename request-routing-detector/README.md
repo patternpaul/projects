@@ -46,11 +46,13 @@ The existing LegacySystemDetector has an incomplete implementation at line 22 wh
 - ✅ AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/IRequestRoutingDetector.cs
 - ✅ AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/IRegistrationCache.cs
 - ✅ AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/IDistributedCacheProvider.cs
+- ✅ AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/RequestRoutingDetector.cs (Core implementation - no cache)
+- ✅ Updated Program.cs with service registration
 
 ### To Create (In Order)
-1. **Core Implementation (FIRST - No Cache)**
-   - AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/RequestRoutingDetector.cs
-   - Direct API calls, no cache dependencies
+1. **Core Implementation (COMPLETED - No Cache)**
+   - ✅ RequestRoutingDetector.cs with direct API calls
+   - ✅ Dependency injection registration
    
 2. **Unit Tests**
    - Test core logic thoroughly before adding complexity
