@@ -47,12 +47,22 @@ The existing LegacySystemDetector has an incomplete implementation at line 22 wh
 - ✅ AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/IRegistrationCache.cs
 - ✅ AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/IDistributedCacheProvider.cs
 
-### To Create
-- AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/RequestRoutingDetector.cs
-- AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/InMemoryRegistrationCache.cs
-- AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/DistributedRegistrationCache.cs
-- Update dependency injection in Program.cs
-- Add unit tests in corresponding test project
+### To Create (In Order)
+1. **Core Implementation (FIRST - No Cache)**
+   - AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/RequestRoutingDetector.cs
+   - Direct API calls, no cache dependencies
+   
+2. **Unit Tests**
+   - Test core logic thoroughly before adding complexity
+   - Ensure all edge cases work
+   
+3. **Cache Implementation (LAST)**
+   - AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/InMemoryRegistrationCache.cs
+   - AF.CustomerVehicleRegistrations.BFF/Services/RequestRouting/DistributedRegistrationCache.cs
+   - Cache decorator/wrapper around core implementation
+   
+4. **Dependency Injection**
+   - Update Program.cs after core implementation is tested
 
 ## Testing Strategy
 - Unit tests for each detection strategy
@@ -89,10 +99,9 @@ Key information for resuming work:
 
 1. **IRequestRoutingDetector** (`/Services/RequestRouting/IRequestRoutingDetector.cs`)
    - Main service interface for routing detection
-   - Methods:
+   - Single public method:
      - `IsRegistrationDriveCompatible()` - Determines Drive compatibility
-     - `GetVehicleRegistration()` - Gets registration checking both IDs
-     - `IsLegacyRegistrationFormat()` - Quick format check
+   - Note: Other methods (GetVehicleRegistration, IsLegacyRegistrationFormat) are implementation details, not part of public API
 
 2. **IRegistrationCache** (`/Services/RequestRouting/IRegistrationCache.cs`)
    - Cache abstraction for two-level caching
@@ -109,15 +118,16 @@ Key information for resuming work:
 
 1. **Separation of Concerns**
    - New RequestRouting namespace separate from Legacy
-   - Clean interfaces with single responsibilities
-   - Abstracted cache providers for flexibility
+   - Single public method interface - everything else is implementation detail
+   - Cache abstractions created but will be implemented LAST
 
-2. **Caching Strategy**
-   - Two-level caching with different TTLs
-   - Cache key patterns for easy invalidation
-   - Health checks for cache availability
+2. **Implementation Strategy (User Direction)**
+   - Core functionality FIRST without any caching
+   - Direct API calls in initial implementation
+   - Cache layer added only after core logic is proven working
+   - Unit tests before optimization
 
 3. **API Design**
-   - Renamed method to `IsRegistrationDriveCompatible` for clarity
-   - Added separate method for format checking
+   - Single method `IsRegistrationDriveCompatible` is the only public API
+   - Internal helper methods for registration lookup and format checking
    - Consistent cancellation token support
